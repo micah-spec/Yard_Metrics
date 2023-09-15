@@ -180,12 +180,105 @@ cms_b2 <- subset(cms, employee_ID %in% b2)
 mph_b2 <- subset(mph, employee_ID %in% b2)
 otp_b2 <- subset(otp, employee_ID %in% b2)
 hrw_b2 <- subset(hrw, employee_ID %in% b2)
-
-view(otp_b2)
 ```
 
-# Calculate Mean for each shift
+# Add cms, mph, and otp mean values to shifts
 ```{r}
+##Calculate the means
+cms_a1_mean <- cms_a1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+cms_a2_mean <- cms_a2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+cms_b1_mean <- cms_b1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+cms_b2_mean <- cms_b2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+mph_a1_mean <- mph_a1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+mph_a2_mean <- mph_a2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+mph_b1_mean <- mph_b1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+mph_b2_mean <- mph_b2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+otp_a1_mean <- otp_a1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+otp_a2_mean <- otp_a2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+otp_b1_mean <- otp_b1 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+otp_b2_mean <- otp_b2 %>%
+        select(-c(1,2)) %>%
+  summarize_if(is.numeric, mean, na.rm = TRUE)
+
+## Add columns back to rbind
+add_columns_back <- list(Employee_ID = "Average", Total = NA)
+add_columns_back <- as.data.frame(add_columns_back)
+
+## In the darkness bind them
+cms_a1_mean <- cbind(add_columns_back,cms_a1_mean)
+cms_a1 <- rbind(cms_a1,cms_a1_mean)
+
+cms_a2_mean <- cbind(add_columns_back,cms_a2_mean)
+cms_a2 <- rbind(cms_a2,cms_a2_mean)
+
+cms_b1_mean <- cbind(add_columns_back,cms_b1_mean)
+cms_b1 <- rbind(cms_b1,cms_b1_mean)
+
+cms_b2_mean <- cbind(add_columns_back,cms_b2_mean)
+cms_b2 <- rbind(cms_b2,cms_b2_mean)
+
+mph_a1_mean <- cbind(add_columns_back,mph_a1_mean)
+mph_a1 <- rbind(mph_a1,mph_a1_mean)
+
+mph_a2_mean <- cbind(add_columns_back,mph_a2_mean)
+mph_a2 <- rbind(mph_a2,mph_a2_mean)
+
+mph_b1_mean <- cbind(add_columns_back,mph_b1_mean)
+mph_b1 <- rbind(mph_b1,mph_b1_mean)
+
+mph_b2_mean <- cbind(add_columns_back,mph_b2_mean)
+mph_b2 <- rbind(mph_b2,mph_b2_mean)
+
+otp_a1_mean <- cbind(add_columns_back,otp_a1_mean)
+otp_a1 <- rbind(otp_a1,otp_a1_mean)
+
+otp_a2_mean <- cbind(add_columns_back,otp_a2_mean)
+otp_a2 <- rbind(otp_a2,otp_a2_mean)
+
+otp_b1_mean <- cbind(add_columns_back,otp_b1_mean)
+otp_b1 <- rbind(otp_b1,otp_b1_mean)
+
+otp_b2_mean <- cbind(add_columns_back,otp_b2_mean)
+otp_b2 <- rbind(otp_b2,otp_b2_mean)
+
+View(otp_b2)
+```
+
+
 
 ```
+
 
