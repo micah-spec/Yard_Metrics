@@ -355,7 +355,7 @@ test2$Date <- mdy(test2$Date)
         b1 <- c("A593317","A642379","A617437","A648278","A644891")
         b2 <- c("A639650","A641937","A642929","A650739")
 
-metric_viz <- function(data,metric,shift){
+metric_viz <- function(data,metric,shift,id){
         
 # Extract individual metric from dataset
         v1 <- data[, data[2, ] == metric]
@@ -408,8 +408,33 @@ metric_viz <- function(data,metric,shift){
 # Convert Date column to date data-class
         v7$Date <- mdy(v7$Date)
         v7 <- as.data.frame(v7)
+
+# Filter by Employee ID        
+        v8 <- v7 %>% filter(Employee_ID %in% c(id,"Average"))
         
-View(v7)
+# Remove NA and NAN values
+        v9 <- v8 %>% filter(!is.na(Count))
+        
+v10 <- v9 %>%
+        ggplot(aes(x=Date,y=Count, color = Employee_ID))+
+        geom_point(size=2)+
+        geom_line(size=.5)+
+        scale_x_date(date_minor_breaks = "1 day")+
+        geom_hline(yintercept = 5, color = "green") +
+        scale_color_manual(values = c("red", "blue")) +
+        labs(y="Moves/Hr",title = "Moves per Hour: id & Shift Average (A1)")+
+        theme_light()
+v10     
 }
 ```
 
+v10 <- v9 %>%
+        filter(Employee_ID == c(id,"Average")) %>%
+        ggplot(aes(x=Date,y=Count, color = Employee_ID))+
+        geom_point(size=3)+
+        geom_line(size=1)+
+        geom_hline(yintercept = 5, color = "green") +
+        scale_color_manual(values = c("red", "blue")) +
+        labs(y="Moves/Hr",title = "Moves per Hour: id & Shift Average (A1)")+
+        theme_light()
+v10     
