@@ -399,8 +399,16 @@ metric_viz <- function(data,metric,shift){
         v6 <- rbind(v5,v5_mean)
         v6 <- v6 %>% mutate(across(is.numeric, round, digits=1))
 
+# Pivot
+        v7 <- v6[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Count",
+
+        )
         
-View(v6)
+View(v7)
 }
 ```
 
