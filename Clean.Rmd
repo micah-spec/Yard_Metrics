@@ -240,44 +240,72 @@ add_columns_back <- as.data.frame(add_columns_back)
 ## In the darkness bind them
 cms_a1_mean <- cbind(add_columns_back,cms_a1_mean)
 cms_a1 <- rbind(cms_a1,cms_a1_mean)
+cms_a1 <- cms_a1 %>% mutate(across(is.numeric, round, digits=1))
 
 cms_a2_mean <- cbind(add_columns_back,cms_a2_mean)
 cms_a2 <- rbind(cms_a2,cms_a2_mean)
+cms_a2 <- cms_a2 %>% mutate(across(is.numeric, round, digits=1))
 
 cms_b1_mean <- cbind(add_columns_back,cms_b1_mean)
 cms_b1 <- rbind(cms_b1,cms_b1_mean)
+cms_b1 <- cms_b1 %>% mutate(across(is.numeric, round, digits=1))
 
 cms_b2_mean <- cbind(add_columns_back,cms_b2_mean)
 cms_b2 <- rbind(cms_b2,cms_b2_mean)
+cms_b2 <- cms_b2 %>% mutate(across(is.numeric, round, digits=1))
 
 mph_a1_mean <- cbind(add_columns_back,mph_a1_mean)
 mph_a1 <- rbind(mph_a1,mph_a1_mean)
+mph_a1 <- mph_a1 %>% mutate(across(is.numeric, round, digits=1))
 
 mph_a2_mean <- cbind(add_columns_back,mph_a2_mean)
 mph_a2 <- rbind(mph_a2,mph_a2_mean)
+mph_a2 <- mph_a2 %>% mutate(across(is.numeric, round, digits=1))
 
 mph_b1_mean <- cbind(add_columns_back,mph_b1_mean)
 mph_b1 <- rbind(mph_b1,mph_b1_mean)
+mph_b1 <- mph_b1 %>% mutate(across(is.numeric, round, digits=1))
 
 mph_b2_mean <- cbind(add_columns_back,mph_b2_mean)
 mph_b2 <- rbind(mph_b2,mph_b2_mean)
+mph_b2 <- mph_b2 %>% mutate(across(is.numeric, round, digits=1))
 
 otp_a1_mean <- cbind(add_columns_back,otp_a1_mean)
 otp_a1 <- rbind(otp_a1,otp_a1_mean)
+otp_a1 <- otp_a1 %>% mutate(across(is.numeric, round, digits=1))
 
 otp_a2_mean <- cbind(add_columns_back,otp_a2_mean)
 otp_a2 <- rbind(otp_a2,otp_a2_mean)
+otp_a2 <- otp_a2 %>% mutate(across(is.numeric, round, digits=1))
 
 otp_b1_mean <- cbind(add_columns_back,otp_b1_mean)
 otp_b1 <- rbind(otp_b1,otp_b1_mean)
+otp_b1 <- otp_b1 %>% mutate(across(is.numeric, round, digits=1))
 
 otp_b2_mean <- cbind(add_columns_back,otp_b2_mean)
 otp_b2 <- rbind(otp_b2,otp_b2_mean)
+otp_b2 <- otp_b2 %>% mutate(across(is.numeric, round, digits=1))
 
-View(otp_b2)
 ```
 
-
+## Pivot
+```{r}
+### Pivot Longer
+test <- cms_a1 %>%
+        pivot_longer(
+                cols = !"Employee_ID",
+                names_to = "Date",
+                values_to = "Count"
+        )
+### Pivot Wider
+test <- test %>%
+        pivot_wider(
+                names_from = "Employee_ID",
+                values_from = "Count"
+        )
+### Remove Total Row
+test <- test[-1,]
+View(test)
 
 ```
 
