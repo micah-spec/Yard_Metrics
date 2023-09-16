@@ -426,7 +426,7 @@ v10 <- v9 %>%
                 )+
         geom_hline(yintercept = 5, color = "green") +
         scale_color_manual(values = c("red", "blue")) +
-        labs(y="MPH",title = "Moves per Hour")+
+        labs(y="MPH",title = "Monthly Moves/Hr with Shift Average")+
         theme_light()
 v10     
 }
