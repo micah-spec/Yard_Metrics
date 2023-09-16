@@ -345,3 +345,163 @@ test2 <- cms_a1[,-2] %>%
 test2$Date <- mdy(test2$Date)
 
 ```
+
+# Clean imported csv to create tidy dataframes for each of the 4 metrics 
+```{R}
+
+
+## Remove commas, which if present returns NA upon conversion to numeric class (e.g 1,215 to 1215)
+tempVar3 <- c(3:length(dat))
+dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern =",", replacement="")
+
+## Remove % symbols, which if present returns NA upon conversion to numeric class (e.g. 98% = 98)
+dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern ="%", replacement="")
+
+#metric_vis arguments: data=dat, metric (choose one)= c("MPH","On-Time Moves")
+
+metric_viz <- function(data=dat,metric)
+
+# Extract individual metric from dataset
+        v1 <- data[, data[2, ] == metric]
+        v2 <- data[, c(2,length(data)-3)]
+        v3 <- cbind(v2, v1)
+
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
+        v4 = v4[-1,]
+                
+# Label the column Employee ID column
+        colnames(v4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(v4)[2] <- "Total"
+        
+# Change the data class from character to numeric
+        c4 <- c(2:length(v4))
+        v4[ ,c4] <- apply(v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+        
+View(V4)
+
+## Create completed moves (cms) dataframe
+cms_v1 <- dat[, dat[2, ] == "Completed Moves"]
+cms_v2 <- dat[, c(2,length(dat)-3)]
+cms_v3 <- cbind(cms_v2, cms_v1)
+
+## Create moves per hour (mph) dataframe
+mph_v1 <- dat[, dat[2, ] == "MPH"]
+mph_v2 <- dat[, c(2,length(dat)-1)]
+mph_v3 <- cbind(mph_v2, mph_v1)
+
+## Create on time percent (otp) dataframe
+otp_v1 <- dat[, dat[2, ] == "On-Time Moves "]
+otp_v2 <- dat[, c(2,length(dat))]
+otp_v3 <- cbind(otp_v2, otp_v1)
+
+## Create hours Worked (hrw) dataframe
+hrw_v1 <- dat[, dat[2, ] == "Hours Worked"]
+hrw_v2 <- dat[, c(2,length(dat)-2)]
+hrw_v3 <- cbind(hrw_v2, hrw_v1)
+
+## Make the date row the header for cms, mph, otp, and hrw dataframes
+cms_v4 <- cms_v3
+colnames(cms_v4) <- cms_v3[1, ]
+cms_v4 = cms_v4[-1,]
+
+mph_v4 <- mph_v3
+colnames(mph_v4) <- mph_v3[1, ]
+mph_v4 = mph_v4[-1,]
+
+otp_v4 <- otp_v3
+colnames(otp_v4) <- otp_v3[1, ]
+otp_v4 = otp_v4[-1,]
+
+hrw_v4 <- hrw_v3
+colnames(hrw_v4) <- hrw_v3[1, ]
+hrw_v4 = hrw_v4[-1,]
+
+## Label the column Employee ID column
+colnames(cms_v4)[1] <- "Employee_ID"
+colnames(mph_v4)[1] <- "Employee_ID"
+colnames(otp_v4)[1] <- "Employee_ID"
+colnames(hrw_v4)[1] <- "Employee_ID"
+
+## Label the Total column 
+colnames(cms_v4)[2] <- "Total"
+colnames(mph_v4)[2] <- "Total"
+colnames(otp_v4)[2] <- "Total"
+colnames(hrw_v4)[2] <- "Total"
+
+## Change the data class from character to numeric
+c4 <- c(2:length(cms_v4))
+cms_v4[ ,c4] <- apply(cms_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+mph_v4[ ,c4] <- apply(mph_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+otp_v4[ ,c4] <- apply(otp_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+hrw_v4[ ,c4] <- apply(hrw_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+
+## Add a row with the calculated mean 
+
+### Copy dataframe
+cms_v5 <- cms_v4
+mph_v5 <- mph_v4
+otp_v5 <- otp_v4
+
+### Calculate mean of all numeric columns
+cms_v5 <- cms_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+mph_v5 <- mph_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+otp_v5 <- otp_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+
+### Label the new row 
+Employee_ID <- "Average"
+cms_v5$Employee_ID <- Employee_ID
+mph_v5$Employee_ID <- Employee_ID
+otp_v5$Employee_ID <- Employee_ID
+
+### Reorder A number column from last to first
+cms_v5 <- cms_v5[, c(length(cms_v5),1:length(cms_v5)-1)]
+mph_v5 <- mph_v5[, c(length(mph_v5),1:length(mph_v5)-1)]
+otp_v5 <- otp_v5[, c(length(otp_v5),1:length(otp_v5)-1)]
+
+### In the darkness bind them
+cms_v6 <- rbind(cms_v4,cms_v5)
+mph_v6 <- rbind(mph_v4,mph_v5)
+otp_v6 <- rbind(otp_v4,otp_v5)
+
+### Round to appropriate digit
+cms_v7 <- cms_v6 %>% mutate(across(is.numeric, round, digits=1))
+mph_v7 <- mph_v6 %>% mutate(across(is.numeric, round, digits=1))
+otp_v7 <- otp_v6 %>% mutate(across(is.numeric, round, digits=1))
+
+## Clean up variable names
+cms <- cms_v7
+mph <- mph_v7
+otp <- otp_v7
+hrw <- hrw_v4
+```
+
+```{r}
+metric_viz <- function(data,metric){
+
+# Extract individual metric from dataset
+        v1 <- data[, data[2, ] == metric]
+        v2 <- data[, c(2,length(data)-3)]
+        v3 <- cbind(v2, v1)
+
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
+        v5 = v4[-1,]
+                
+# Label the column Employee ID column
+        colnames(v5)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(v5)[2] <- "Total"
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(v5))
+        v5[ ,c1] <- apply(v5[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+View(v5)
+}
+```
