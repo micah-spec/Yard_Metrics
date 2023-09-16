@@ -385,10 +385,22 @@ metric_viz <- function(data,metric,shift){
 # Filter by shift
         v5 <- v4 %>% filter(Employee_ID %in% shift)
 
+# Calculate shift mean
+        v5_mean <- v5 %>%
+                select(-c(1,2)) %>%
+                        summarize_if(is.numeric, mean, na.rm = TRUE)
         
+# Add columns back to rbind
+        add_columns_back <- list(Employee_ID = "Average", Total = NA)
+        add_columns_back <- as.data.frame(add_columns_back)
+        
+# In the darkness bind them
+        v5_mean <- cbind(add_columns_back,v5_mean)
+        v6 <- rbind(v5,v5_mean)
+        v6 <- v6 %>% mutate(across(is.numeric, round, digits=1))
 
         
-View(v5)
+View(v6)
 }
 ```
 
