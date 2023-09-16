@@ -309,4 +309,39 @@ View(test)
 
 ```
 
+## Test Visualization
+```{r}
+test2 <- mph_a1[,-2] %>%
+        pivot_longer(
+                cols = !"Employee_ID",
+                names_to = "Date",
+                values_to = "Count",
 
+        )
+test2$Date <- mdy(test2$Date)
+test2 <- as.data.frame(test2)
+viz_test <- test2 %>%
+        filter(Employee_ID == c("A632200","Average")) %>%
+        ggplot(aes(x=Date,y=Count, color = Employee_ID))+
+        geom_point(size=3)+
+        geom_line(size=1)+
+        geom_hline(yintercept = 5, color = "green") +
+        scale_color_manual(values = c("red", "blue")) +
+        labs(y="Moves/Hr",title = "Moves per Hour: A632200 & Shift Average (A1)")+
+        theme_light()
+viz_test
+
+
+```
+
+```{r}
+test2 <- cms_a1[,-2] %>%
+        pivot_longer(
+                cols = !"Employee_ID",
+                names_to = "Date",
+                values_to = "Count",
+                values_drop_na = TRUE
+        )
+test2$Date <- mdy(test2$Date)
+
+```
