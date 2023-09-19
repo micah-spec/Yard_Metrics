@@ -415,6 +415,7 @@ mph_viz <- function(shift,id){
 # Remove NA and NAN values
         v9 <- v8 %>% filter(!is.na(Count))
         
+# Create Visualization
 v10 <- v9 %>%
         ggplot(aes(x=Date,y=Count, color = Employee_ID))+
         geom_point(size=2)+
@@ -540,8 +541,19 @@ otp_viz <- function(id){
       v13 <- v12 %>%
         uncount(Moves) %>%
         mutate(Moves = 1)
-      
-       View(v13)
+       
+# # Create Visualization
+v14 <- ggplot(v13, aes(x = Date, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Late", "On Time")) +
+         scale_x_date(
+                date_breaks = "2 days",
+                date_minor_breaks = "1 day",
+                date_labels = "%d"
+                )+
+labs(x="Date",y="Moves",title = "Total Moves")
+  theme_light()
+v14
 
 }
 
