@@ -1,5 +1,5 @@
 ---
-title: "Driver"
+title: "February, 2023 Driver Performance"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -10,6 +10,7 @@ output:
 library(flexdashboard)
 library(tidyverse)
 library(data.table)
+library(knitr)
 
 dat <- read.csv("2023_02_summary.csv", header=FALSE)
 
@@ -107,7 +108,7 @@ v10 <- v9 %>%
                 )+
         geom_hline(yintercept = 5, color = "green") +
         scale_color_manual(values = c("red", "blue")) +
-        labs(y="MPH",title = "Moves/Hr with Shift Average")+
+        labs(y="MPH")+
         theme_light()
 v10     
 }
@@ -227,32 +228,253 @@ v14 <- ggplot(v13, aes(x = Date, fill = Category)) +
                 date_minor_breaks = "1 day",
                 date_labels = "%d"
                 )+
-labs(x="Date",y="Moves",title = "Total Moves")
+labs(x="Date",y="Moves")
   theme_light()
 v14
 }
 
+# smry_viz function
+
+# smry_viz function
+
+smry_viz <- function(shift,id){
+# Extract completed moves metric from dataset
+        v1 <- dat[, dat[2, ] == "Completed Moves"]
+        v2 <- dat[, c(2,length(dat)-3)]
+        v3 <- cbind(v2, v1)
+
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
+
+# Label the Employee ID column
+        colnames(v4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(v4)[2] <- "Total"
+        
+# Remove first 2 rows
+                v4 = v4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(v4))
+        v4[ ,c1] <- apply(v4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        v5 <- v4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        v6 <- v5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Total",
+                )
+# Convert Date column to date data-class
+        v6$Date <- mdy(v6$Date)
+        v6 <- as.data.frame(v6)
+        
+# Extract moves per hour metric from dataset
+        m1 <- dat[, dat[2, ] == "MPH"]
+        m2 <- dat[, c(2,length(dat)-3)]
+        m3 <- cbind(m2, m1)
+
+# Make the date row the header
+        m4 <- m3
+        colnames(m4) <- m3[1, ]
+
+# Label the Employee ID column
+        colnames(m4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(m4)[2] <- "Total"
+        
+# Remove first 2 rows
+                m4 = m4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        m4[ ,c1] <- apply(m4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        m5 <- m4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        m6 <- m5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "MPH",
+                )
+# Convert Date column to date data-class
+        m6$Date <- mdy(m6$Date)
+        m6 <- as.data.frame(m6)
+      
+# Extract hours worked metric from dataset
+        h1 <- dat[, dat[2, ] == "Hours Worked"]
+        h2 <- dat[, c(2,length(dat)-3)]
+        h3 <- cbind(h2, h1)
+
+# Make the date row the header
+        h4 <- h3
+        colnames(h4) <- h3[1, ]
+
+# Label the Employee ID column
+        colnames(h4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(h4)[2] <- "Total"
+        
+# Remove first 2 rows
+                h4 = h4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        h4[ ,c1] <- apply(h4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        h5 <- h4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        h6 <- h5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Hours",
+                )
+# Convert Date column to date data-class
+        h6$Date <- mdy(h6$Date)
+        h6 <- as.data.frame(h6)
+      
+        
+# Extract on time percent metric from dataset
+        m1 <- dat[, dat[2, ] == "MPH"]
+        m2 <- dat[, c(2,length(dat)-3)]
+        m3 <- cbind(m2, m1)
+
+# Make the date row the header
+        m4 <- m3
+        colnames(m4) <- m3[1, ]
+
+# Label the Employee ID column
+        colnames(m4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(m4)[2] <- "Total"
+        
+# Remove first 2 rows
+                m4 = m4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        m4[ ,c1] <- apply(m4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        m5 <- m4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        m6 <- m5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "MPH",
+                )
+# Convert Date column to date data-class
+        m6$Date <- mdy(m6$Date)
+        m6 <- as.data.frame(m6)
+      
+# Extract on time percent metric from dataset
+        o1 <- dat[, dat[2, ] == "On-Time Moves "]
+        o2 <- dat[, c(2,length(dat)-3)]
+        o3 <- cbind(o2, o1)
+
+# Make the date row the header
+        o4 <- o3
+        colnames(o4) <- o3[1, ]
+
+# Label the Employee ID column
+        colnames(o4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(o4)[2] <- "Total"
+        
+# Remove first 2 rows
+                o4 = o4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        o4[ ,c1] <- apply(o4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        o5 <- o4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        o6 <- o5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "On_Time",
+                )
+# Convert Date column to date data-class
+        o6$Date <- mdy(o6$Date)
+        o6 <- as.data.frame(o6)
+        
+# Join Completed and MPH
+       v7 <- merge(x = v6, y = m6)
+        
+# Join with hours
+       v8 <- merge(x = v7, y = h6) 
+       
+# Join with on time
+       v8 <- merge(x = v8, y = o6) 
+          
+# Remove NA and NAN values
+        v8 <- v8 %>% filter(!is.na(Total))
+
+# Filter by Employee ID        
+        v9 <- v8 %>% filter(Employee_ID %in% id)
+
+# Create Summary
+        
+        Driver <- c(id,"Shift Average")
+        Moves <- c(sum(v9$Total),sum(v8$Total/length(shift)))
+        MPH <- c(mean(v9$MPH),mean(v8$MPH))
+        Hours <- c(sum(v9$Hours),sum(v8$Hours)/length(shift))
+        On_Time <- c(mean(v9$On_Time),mean(v8$On_Time))
+        
+        v10 <- data.table(Driver,Moves,On_Time,MPH,Hours)
+        
+           # Round
+       v11 <- v10 %>% mutate(across(is.numeric, round, digits=1))
+        
+        kable(v11)
+}
 ```
 
-Row
+Row {data-height=75}
 -------------------------------------
     
-### Chart 1
+### A633224 Summary
     
 ```{r}
-
+smry_viz(a1,"A633224")
 ```
    
 Row
 -------------------------------------
     
-### Chart 2
+### Moves per Hour 
     
 ```{r}
 mph_viz(a1,"A633224")
 ```
     
-### Chart 3
+### Completed Moves
 
 ```{r}
 otp_viz("A633224")
