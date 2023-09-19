@@ -517,7 +517,32 @@ otp_viz <- function(id){
 # Join Tables
        v7 <- merge(x = v6, y = o6)
        
-       View(v7)
+# Remove NA and NAN values
+        v8 <- v7 %>% filter(!is.na(Count))
+       
+
+# Multiply Completed Moves by On-Time percent
+       v9 <- v8 %>% mutate(On_Time = Count * Percent/100)
+       
+# Multiply Completed Moves by On-Time percent
+       v10 <- v9 %>% mutate(Late = Count - On_Time)
+       
+# Round
+       v11 <- v10 %>% mutate(across(is.numeric, round, digits=0))
+
+       
+# gather into new dataframe so uncount function will work
+      v12 <- v11 %>%
+        select(Employee_ID, Date, On_Time, Late) %>%
+        gather(key="Category", value = "Moves",-c(Employee_ID,Date))
+      
+# Uncount
+      v13 <- v12 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+      
+       View(v13)
+
 }
 
 ```
