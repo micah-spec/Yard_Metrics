@@ -347,7 +347,7 @@ test2$Date <- mdy(test2$Date)
 ```
 
 
-
+# MPH_Viz Function
 ```{r}
 #Employee ID's by shift
         a1 <- c("A633224","A634341","A639084","A649672")
@@ -426,10 +426,139 @@ v10 <- v9 %>%
                 )+
         geom_hline(yintercept = 5, color = "green") +
         scale_color_manual(values = c("red", "blue")) +
-        labs(y="MPH",title = "Monthly Moves/Hr with Shift Average")+
+        labs(y="MPH",title = "Moves/Hr with Shift Average")+
         theme_light()
 v10     
 }
 ```
 
-  
+# OTP_Viz
+```{r}
+
+otp_viz <- function(id){
+        
+# Extract completed moves from dataset
+        v1 <- dat[, dat[2, ] == "Completed Moves"]
+        v2 <- dat[, c(2,length(dat)-3)]
+        v3 <- cbind(v2, v1)
+
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
+
+# Label the Employee ID column
+        colnames(v4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(v4)[2] <- "Total"
+        
+# Remove first 2 rows
+                v4 = v4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(v4))
+        v4[ ,c1] <- apply(v4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Pivot
+        v5 <- v4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Count",
+                )
+# Convert Date column to date data-class
+        v5$Date <- mdy(v5$Date)
+        v5 <- as.data.frame(v5)
+
+# Filter by Employee ID        
+        v6 <- v5 %>% filter(Employee_ID %in% id)
+        
+
+        
+# Extract on-time moves from dataset
+        o1 <- dat[, dat[2, ] == "On-Time Moves "]
+        o2 <- dat[, c(2,length(dat)-3)]
+        o3 <- cbind(o2, o1)
+
+# Make the date row the header
+        o4 <- o3
+        colnames(o4) <- o3[1, ]
+
+# Label the Employee ID column
+        colnames(o4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(o4)[2] <- "Total"
+        
+# Remove first 2 rows
+                o4 = o4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(o4))
+        o4[ ,c1] <- apply(o4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Pivot
+        o5 <- o4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Percent",
+                )
+# Convert Date column to date data-class
+        o5$Date <- mdy(o5$Date)
+        o5 <- as.data.frame(o5)
+
+# Filter by Employee ID        
+        o6 <- o5 %>% filter(Employee_ID %in% id)
+
+        
+# Join Tables
+       v7 <- merge(x = v6, y = o6)
+       
+       View(v7)
+}
+
+```
+
+```{r}
+# Extract individual metric from dataset
+        o1 <- dat[, dat[2, ] == "On-Time Moves "]
+        o2 <- dat[, c(2,length(dat)-3)]
+        o3 <- cbind(o2, o1)
+
+# Make the date row the header
+        o4 <- o3
+        colnames(o4) <- o3[1, ]
+
+# Label the Employee ID column
+        colnames(o4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(o4)[2] <- "Total"
+        
+# Remove first 2 rows
+                o4 = o4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(o4))
+        o4[ ,c1] <- apply(o4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Pivot
+        o5 <- o4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Count",
+                )
+# Convert Date column to date data-class
+        o5$Date <- mdy(o5$Date)
+        o5 <- as.data.frame(o5)
+
+# Filter by Employee ID        
+        o6 <- o5 %>% filter(Employee_ID %in% id)
+        
+        View(o6)
+```
