@@ -1,10 +1,10 @@
 ---
-title: "Driver Performance"
+title: "Driver"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    orientation: rows
 ---
+    
 
 ```{r setup, include=FALSE}
 library(flexdashboard)
@@ -29,255 +29,232 @@ dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern =",", replacement="")
 ## Remove % symbols, which if present returns NA upon conversion to numeric class (e.g. 98% = 98)
 dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern ="%", replacement="")
 
-## Create completed moves (cms) dataframe
-cms_v1 <- dat[, dat[2, ] == "Completed Moves"]
-cms_v2 <- dat[, c(2,length(dat)-3)]
-cms_v3 <- cbind(cms_v2, cms_v1)
-
-## Create moves per hour (mph) dataframe
-mph_v1 <- dat[, dat[2, ] == "MPH"]
-mph_v2 <- dat[, c(2,length(dat)-1)]
-mph_v3 <- cbind(mph_v2, mph_v1)
-
-## Create on time percent (otp) dataframe
-otp_v1 <- dat[, dat[2, ] == "On-Time Moves "]
-otp_v2 <- dat[, c(2,length(dat))]
-otp_v3 <- cbind(otp_v2, otp_v1)
-
-## Create hours Worked (hrw) dataframe
-hrw_v1 <- dat[, dat[2, ] == "Hours Worked"]
-hrw_v2 <- dat[, c(2,length(dat)-2)]
-hrw_v3 <- cbind(hrw_v2, hrw_v1)
-
-## Make the date row the header for cms, mph, otp, and hrw dataframes
-cms_v4 <- cms_v3
-colnames(cms_v4) <- cms_v3[1, ]
-cms_v4 = cms_v4[-1,]
-
-mph_v4 <- mph_v3
-colnames(mph_v4) <- mph_v3[1, ]
-mph_v4 = mph_v4[-1,]
-
-otp_v4 <- otp_v3
-colnames(otp_v4) <- otp_v3[1, ]
-otp_v4 = otp_v4[-1,]
-
-hrw_v4 <- hrw_v3
-colnames(hrw_v4) <- hrw_v3[1, ]
-hrw_v4 = hrw_v4[-1,]
-
-## Label the column Employee ID column
-colnames(cms_v4)[1] <- "Employee_ID"
-colnames(mph_v4)[1] <- "Employee_ID"
-colnames(otp_v4)[1] <- "Employee_ID"
-colnames(hrw_v4)[1] <- "Employee_ID"
-
-## Label the Total column 
-colnames(cms_v4)[2] <- "Total"
-colnames(mph_v4)[2] <- "Total"
-colnames(otp_v4)[2] <- "Total"
-colnames(hrw_v4)[2] <- "Total"
-
-## Change the data class from character to numeric
-c4 <- c(2:length(cms_v4))
-cms_v4[ ,c4] <- apply(cms_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
-mph_v4[ ,c4] <- apply(mph_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
-otp_v4[ ,c4] <- apply(otp_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
-hrw_v4[ ,c4] <- apply(hrw_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
-
-## Add a row with the calculated mean 
-
-### Copy dataframe
-cms_v5 <- cms_v4
-mph_v5 <- mph_v4
-otp_v5 <- otp_v4
-
-### Calculate mean of all numeric columns
-cms_v5 <- cms_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
-mph_v5 <- mph_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
-otp_v5 <- otp_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
-
-### Label the new row 
-Employee_ID <- "Average"
-cms_v5$Employee_ID <- Employee_ID
-mph_v5$Employee_ID <- Employee_ID
-otp_v5$Employee_ID <- Employee_ID
-
-### Reorder A number column from last to first
-cms_v5 <- cms_v5[, c(length(cms_v5),1:length(cms_v5)-1)]
-mph_v5 <- mph_v5[, c(length(mph_v5),1:length(mph_v5)-1)]
-otp_v5 <- otp_v5[, c(length(otp_v5),1:length(otp_v5)-1)]
-
-### In the darkness bind them
-cms_v6 <- rbind(cms_v4,cms_v5)
-mph_v6 <- rbind(mph_v4,mph_v5)
-otp_v6 <- rbind(otp_v4,otp_v5)
-
-### Round to appropriate digit
-cms_v7 <- cms_v6 %>% mutate(across(is.numeric, round, digits=1))
-mph_v7 <- mph_v6 %>% mutate(across(is.numeric, round, digits=1))
-otp_v7 <- otp_v6 %>% mutate(across(is.numeric, round, digits=1))
-
-## Clean up variable names
-cms <- cms_v7
-mph <- mph_v7
-otp <- otp_v7
-hrw <- hrw_v4
-
 #Employee ID's by shift
-a1 <- c("A633224","A634341","A639084","A649672")
-a2 <- c("A582797","A651095","A649670","A650934")
-b1 <- c("A593317","A642379","A617437","A648278","A644891")
-b2 <- c("A639650","A641937","A642929","A650739")
+        a1 <- c("A633224","A634341","A639084","A649672")
+        a2 <- c("A582797","A651095","A649670","A650934")
+        b1 <- c("A593317","A642379","A617437","A648278","A644891")
+        b2 <- c("A639650","A641937","A642929","A650739")
 
-## Shift A1
-cms_a1 <- subset(cms, employee_ID %in% a1)
-mph_a1 <- subset(mph, employee_ID %in% a1)
-otp_a1 <- subset(otp, employee_ID %in% a1)
-hrw_a1 <- subset(hrw, employee_ID %in% a1)
+mph_viz <- function(shift,id){
+        
+# Extract individual metric from dataset
+        v1 <- dat[, dat[2, ] == "MPH"]
+        v2 <- dat[, c(2,length(dat)-3)]
+        v3 <- cbind(v2, v1)
 
-##Shift A2
-cms_a2 <- subset(cms, employee_ID %in% a2)
-mph_a2 <- subset(mph, employee_ID %in% a2)
-otp_a2 <- subset(otp, employee_ID %in% a2)
-hrw_a2 <- subset(hrw, employee_ID %in% a2)
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
 
-##Shift B1
-cms_b1 <- subset(cms, employee_ID %in% b1)
-mph_b1 <- subset(mph, employee_ID %in% b1)
-otp_b1 <- subset(otp, employee_ID %in% b1)
-hrw_b1 <- subset(hrw, employee_ID %in% b1)
+# Label the Employee ID column
+        colnames(v4)[1] <- "Employee_ID"
 
-##Shift B2
-cms_b2 <- subset(cms, employee_ID %in% b2)
-mph_b2 <- subset(mph, employee_ID %in% b2)
-otp_b2 <- subset(otp, employee_ID %in% b2)
-hrw_b2 <- subset(hrw, employee_ID %in% b2)
+# Label the Total column 
+        colnames(v4)[2] <- "Total"
+        
+# Remove first 2 rows
+                v4 = v4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(v4))
+        v4[ ,c1] <- apply(v4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
 
-##Calculate the means
-cms_a1_mean <- cms_a1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Filter by shift
+        v5 <- v4 %>% filter(Employee_ID %in% shift)
 
-cms_a2_mean <- cms_a2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Calculate shift mean
+        v5_mean <- v5 %>%
+                select(-c(1,2)) %>%
+                        summarize_if(is.numeric, mean, na.rm = TRUE)
+        
+# Add columns back to rbind
+        add_columns_back <- list(Employee_ID = "Average", Total = NA)
+        add_columns_back <- as.data.frame(add_columns_back)
+        
+# In the darkness bind them
+        v5_mean <- cbind(add_columns_back,v5_mean)
+        v6 <- rbind(v5,v5_mean)
+        v6 <- v6 %>% mutate(across(is.numeric, round, digits=1))
 
-cms_b1_mean <- cms_b1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Pivot
+        v7 <- v6[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Count",
+        )
 
-cms_b2_mean <- cms_b2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Convert Date column to date data-class
+        v7$Date <- mdy(v7$Date)
+        v7 <- as.data.frame(v7)
 
-mph_a1_mean <- mph_a1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Filter by Employee ID        
+        v8 <- v7 %>% filter(Employee_ID %in% c(id,"Average"))
+        
+# Remove NA and NAN values
+        v9 <- v8 %>% filter(!is.na(Count))
+        
+# Create Visualization
+v10 <- v9 %>%
+        ggplot(aes(x=Date,y=Count, color = Employee_ID))+
+        geom_point(size=2)+
+        geom_line(size=.5)+
+        scale_x_date(
+                date_breaks = "2 days",
+                date_minor_breaks = "1 day",
+                date_labels = "%d"
+                )+
+        geom_hline(yintercept = 5, color = "green") +
+        scale_color_manual(values = c("red", "blue")) +
+        labs(y="MPH",title = "Moves/Hr with Shift Average")+
+        theme_light()
+v10     
+}
 
-mph_a2_mean <- mph_a2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+otp_viz <- function(id){
+        
+# Extract completed moves from dataset
+        v1 <- dat[, dat[2, ] == "Completed Moves"]
+        v2 <- dat[, c(2,length(dat)-3)]
+        v3 <- cbind(v2, v1)
 
-mph_b1_mean <- mph_b1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Make the date row the header
+        v4 <- v3
+        colnames(v4) <- v3[1, ]
 
-mph_b2_mean <- mph_b2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Label the Employee ID column
+        colnames(v4)[1] <- "Employee_ID"
 
-otp_a1_mean <- otp_a1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Label the Total column 
+        colnames(v4)[2] <- "Total"
+        
+# Remove first 2 rows
+                v4 = v4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(v4))
+        v4[ ,c1] <- apply(v4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
 
-otp_a2_mean <- otp_a2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Pivot
+        v5 <- v4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Count",
+                )
+# Convert Date column to date data-class
+        v5$Date <- mdy(v5$Date)
+        v5 <- as.data.frame(v5)
 
-otp_b1_mean <- otp_b1 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+# Filter by Employee ID        
+        v6 <- v5 %>% filter(Employee_ID %in% id)
+        
 
-otp_b2_mean <- otp_b2 %>%
-        select(-c(1,2)) %>%
-  summarize_if(is.numeric, mean, na.rm = TRUE)
+        
+# Extract on-time moves from dataset
+        o1 <- dat[, dat[2, ] == "On-Time Moves "]
+        o2 <- dat[, c(2,length(dat)-3)]
+        o3 <- cbind(o2, o1)
 
-## Add columns back to rbind
-add_columns_back <- list(Employee_ID = "Average", Total = NA)
-add_columns_back <- as.data.frame(add_columns_back)
+# Make the date row the header
+        o4 <- o3
+        colnames(o4) <- o3[1, ]
 
-## In the darkness bind them
-cms_a1_mean <- cbind(add_columns_back,cms_a1_mean)
-cms_a1 <- rbind(cms_a1,cms_a1_mean)
-cms_a1 <- cms_a1 %>% mutate(across(is.numeric, round, digits=1))
+# Label the Employee ID column
+        colnames(o4)[1] <- "Employee_ID"
 
-cms_a2_mean <- cbind(add_columns_back,cms_a2_mean)
-cms_a2 <- rbind(cms_a2,cms_a2_mean)
-cms_a2 <- cms_a2 %>% mutate(across(is.numeric, round, digits=1))
+# Label the Total column 
+        colnames(o4)[2] <- "Total"
+        
+# Remove first 2 rows
+                o4 = o4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(o4))
+        o4[ ,c1] <- apply(o4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
 
-cms_b1_mean <- cbind(add_columns_back,cms_b1_mean)
-cms_b1 <- rbind(cms_b1,cms_b1_mean)
-cms_b1 <- cms_b1 %>% mutate(across(is.numeric, round, digits=1))
+# Pivot
+        o5 <- o4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Percent",
+                )
+# Convert Date column to date data-class
+        o5$Date <- mdy(o5$Date)
+        o5 <- as.data.frame(o5)
 
-cms_b2_mean <- cbind(add_columns_back,cms_b2_mean)
-cms_b2 <- rbind(cms_b2,cms_b2_mean)
-cms_b2 <- cms_b2 %>% mutate(across(is.numeric, round, digits=1))
+# Filter by Employee ID        
+        o6 <- o5 %>% filter(Employee_ID %in% id)
 
-mph_a1_mean <- cbind(add_columns_back,mph_a1_mean)
-mph_a1 <- rbind(mph_a1,mph_a1_mean)
-mph_a1 <- mph_a1 %>% mutate(across(is.numeric, round, digits=1))
+        
+# Join Tables
+       v7 <- merge(x = v6, y = o6)
+       
+# Remove NA and NAN values
+        v8 <- v7 %>% filter(!is.na(Count))
+       
 
-mph_a2_mean <- cbind(add_columns_back,mph_a2_mean)
-mph_a2 <- rbind(mph_a2,mph_a2_mean)
-mph_a2 <- mph_a2 %>% mutate(across(is.numeric, round, digits=1))
+# Multiply Completed Moves by On-Time percent
+       v9 <- v8 %>% mutate(On_Time = Count * Percent/100)
+       
+# Multiply Completed Moves by On-Time percent
+       v10 <- v9 %>% mutate(Late = Count - On_Time)
+       
+# Round
+       v11 <- v10 %>% mutate(across(is.numeric, round, digits=0))
 
-mph_b1_mean <- cbind(add_columns_back,mph_b1_mean)
-mph_b1 <- rbind(mph_b1,mph_b1_mean)
-mph_b1 <- mph_b1 %>% mutate(across(is.numeric, round, digits=1))
-
-mph_b2_mean <- cbind(add_columns_back,mph_b2_mean)
-mph_b2 <- rbind(mph_b2,mph_b2_mean)
-mph_b2 <- mph_b2 %>% mutate(across(is.numeric, round, digits=1))
-
-otp_a1_mean <- cbind(add_columns_back,otp_a1_mean)
-otp_a1 <- rbind(otp_a1,otp_a1_mean)
-otp_a1 <- otp_a1 %>% mutate(across(is.numeric, round, digits=1))
-
-otp_a2_mean <- cbind(add_columns_back,otp_a2_mean)
-otp_a2 <- rbind(otp_a2,otp_a2_mean)
-otp_a2 <- otp_a2 %>% mutate(across(is.numeric, round, digits=1))
-
-otp_b1_mean <- cbind(add_columns_back,otp_b1_mean)
-otp_b1 <- rbind(otp_b1,otp_b1_mean)
-otp_b1 <- otp_b1 %>% mutate(across(is.numeric, round, digits=1))
-
-otp_b2_mean <- cbind(add_columns_back,otp_b2_mean)
-otp_b2 <- rbind(otp_b2,otp_b2_mean)
-otp_b2 <- otp_b2 %>% mutate(across(is.numeric, round, digits=1))
+       
+# gather into new dataframe so uncount function will work
+      v12 <- v11 %>%
+        select(Employee_ID, Date, On_Time, Late) %>%
+        gather(key="Category", value = "Moves",-c(Employee_ID,Date))
+      
+# Uncount
+      v13 <- v12 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+       
+# # Create Visualization
+v14 <- ggplot(v13, aes(x = Date, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Late", "On Time")) +
+         scale_x_date(
+                date_breaks = "2 days",
+                date_minor_breaks = "1 day",
+                date_labels = "%d"
+                )+
+labs(x="Date",y="Moves",title = "Total Moves")
+  theme_light()
+v14
+}
 
 ```
 
-Page 1 {data-orientation=columns}
-=================
-
-Column
--------    
-### Chart A
-
+Row
+-------------------------------------
+    
+### Chart 1
+    
 ```{r}
 
+```
+   
+Row
+-------------------------------------
+    
+### Chart 2
+    
+```{r}
+mph_viz(a1,"A633224")
+```
+    
+### Chart 3
 
-
+```{r}
+otp_viz("A633224")
 ```
 
-Page 2 {data-orientation=columns}
-=================
-
-
-Page 3 {data-orientation=columns}
-=================
-
-
-Page 4 {data-orientation=columns}
-=================
