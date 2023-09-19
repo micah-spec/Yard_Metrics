@@ -708,10 +708,25 @@ smry_viz <- function(shift,id){
 # Join with hours
        v8 <- merge(x = v7, y = h6) 
           
-        View(v8)
+# Remove NA and NAN values
+        v8 <- v8 %>% filter(!is.na(Total))
+
+# Filter by Employee ID        
+        v9 <- v8 %>% filter(Employee_ID %in% id)
+
+# Create Summary
         
+        Driver <- c(id,"Shift Average")
+        Moves <- c(sum(v9$Total),sum(v8$Total/length(shift)))
+        MPH <- c(mean(v9$MPH),mean(v8$MPH))
+        Hours <- c(sum(v9$Hours),sum(v8$Hours)/length(shift))
         
+        v10 <- data.table(Driver,Moves,MPH,Hours)
         
+           # Round
+       v11 <- v10 %>% mutate(across(is.numeric, round, digits=1))
+        
+        kable(v11)
         
         
         
@@ -719,8 +734,11 @@ smry_viz <- function(shift,id){
 }
 ```
 
-        # Remove NA and NAN values
-        v6 <- v6 %>% filter(!is.na(Total))
+```{r}
+shift_average <- c(sum(v8$Total/length(shift)))
+```
+       
+# Create Summary
+        shift_average <- c(sum(v8$Total/length(shift)),mean(v8$MPH),sum(v8$Hours)/length(shift))
         
-        v7 <- sum(v6$Total)
-        v7
+        shift_average
