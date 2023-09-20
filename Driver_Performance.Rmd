@@ -48,7 +48,7 @@ mph_viz <- function(shift,id){
         colnames(v4) <- v3[1, ]
 
 # Label the Employee ID column
-        colnames(v4)[1] <- "Employee_ID"
+        colnames(v4)[1] <- "Driver"
 
 # Label the Total column 
         colnames(v4)[2] <- "Total"
@@ -62,7 +62,7 @@ mph_viz <- function(shift,id){
         
 
 # Filter by shift
-        v5 <- v4 %>% filter(Employee_ID %in% shift)
+        v5 <- v4 %>% filter(Driver %in% shift)
 
 # Calculate shift mean
         v5_mean <- v5 %>%
@@ -70,7 +70,7 @@ mph_viz <- function(shift,id){
                         summarize_if(is.numeric, mean, na.rm = TRUE)
         
 # Add columns back to rbind
-        add_columns_back <- list(Employee_ID = "Average", Total = NA)
+        add_columns_back <- list(Driver = "Average", Total = NA)
         add_columns_back <- as.data.frame(add_columns_back)
         
 # In the darkness bind them
@@ -81,7 +81,7 @@ mph_viz <- function(shift,id){
 # Pivot
         v7 <- v6[,-2] %>%
                 pivot_longer(
-                        cols = !"Employee_ID",
+                        cols = !"Driver",
                         names_to = "Date",
                         values_to = "Count",
         )
@@ -91,14 +91,14 @@ mph_viz <- function(shift,id){
         v7 <- as.data.frame(v7)
 
 # Filter by Employee ID        
-        v8 <- v7 %>% filter(Employee_ID %in% c(id,"Average"))
+        v8 <- v7 %>% filter(Driver %in% c(id,"Average"))
         
 # Remove NA and NAN values
         v9 <- v8 %>% filter(!is.na(Count))
         
 # Create Visualization
 v10 <- v9 %>%
-        ggplot(aes(x=Date,y=Count, color = Employee_ID))+
+        ggplot(aes(x=Date,y=Count, color = Driver))+
         geom_point(size=2)+
         geom_line(size=.5)+
         scale_x_date(
@@ -106,8 +106,8 @@ v10 <- v9 %>%
                 date_minor_breaks = "1 day",
                 date_labels = "%d"
                 )+
-        geom_hline(yintercept = 5, color = "green") +
-        scale_color_manual(values = c("red", "blue")) +
+        geom_hline(yintercept = 5, color = "red") +
+        scale_color_manual(values = c("black", "grey")) +
         labs(y="MPH")+
         theme_light()
 v10     
