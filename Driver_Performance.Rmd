@@ -106,8 +106,9 @@ v10 <- v9 %>%
                 date_minor_breaks = "1 day",
                 date_labels = "%d"
                 )+
-        geom_hline(yintercept = 5, color = "red") +
-        scale_color_manual(values = c("black", "grey")) +
+        geom_hline(aes(yintercept = 5,linetype = "5 MPH"), color = "coral") +
+        scale_color_manual(values = c("cornflowerblue", "darkgoldenrod2")) +
+        scale_linetype_manual(name ="", values = "solid")+
         labs(y="MPH")+
         theme_light()
 v10     
