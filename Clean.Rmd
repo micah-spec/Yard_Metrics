@@ -198,9 +198,11 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
 # Create new column with quantity of additional moves needed to hit 5 moves/hr target 
        v7 <- v6 %>% mutate(Target_Moves = pmax(5*Hours-Moves,0))
         
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target that must be On Time 
+       v8 <- v7 %>% mutate(On_Time_Target = pmax(round(.78*(Moves+Target_Moves)-On_Time,digits=0),0))
        
-View(v7)
+       
+View(v8)
 
 
 ```
-
