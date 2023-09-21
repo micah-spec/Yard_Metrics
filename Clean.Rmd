@@ -15,7 +15,7 @@ This document is intended to import the data and clean it for downstream analyti
 ```{r}
 library(tidyverse)
 library(data.table)
-library(knitr)
+library(plotly)
 ```
 
 # Read CSV
@@ -203,8 +203,42 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
        
 # Create new column with difference between Min_On_Time and Target_Moves
        v9 <- v8 %>% mutate(OK_Late = pmax(Target_Moves - Min_On_Time,0))
-              
-View(v9)
-
-
 ```
+
+# Target Function
+```{r}
+# Define Shifts 
+        a1 <- c("A633224","A634341","A639084","A649672")
+        a2 <- c("A582797","A651095","A649670","A650934")
+        b1 <- c("A593317","A642379","A617437","A648278","A644891")
+        b2 <- c("A639650","A641937","A642929","A650739")
+        
+target <- function(from,to,shift){
+# Filter by Date
+        v10 <- v9 %>% filter(between(Date, as.Date(from), as.Date(to)))
+
+# Filter by Shift
+        v11 <- v10 %>% filter(Employee_ID %in% shift)
+                
+# gather into new dataframe so uncount function will work
+      v12 <- v11 %>%
+        select(Employee_ID,Min_On_Time,OK_Late) %>%
+        gather(key="Category", value = "Moves",-Employee_ID)
+# Uncount
+      v13 <- v12 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+    
+      
+# Create Visualization
+
+v14 <- ggplot(v13, aes(x = Employee_ID, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Min On Time", "Okay Late")) +
+labs(x="Driver",y="Moves",title="Qty of Moves Required to Meet Performance Standard")
+  theme_light()
+
+ggplotly(v14)
+}
+```
+
