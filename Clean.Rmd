@@ -242,3 +242,60 @@ ggplotly(v14)
 }
 ```
 
+# Short Shift Function
+```{r}
+# Filter by Date
+        v10 <- v9 %>% filter(between(Date, as.Date("2023-02-05"), as.Date("2023-02-12")))
+
+# Filter by Shift
+        v11 <- v10 %>% filter(Employee_ID %in% a1)
+        
+# Calculate average moves/day for each driver, and then divide that by the number of drivers less 1 to distribute the short shift moves among remaining drivers
+        add_moves <- round(sum(v11$Moves)/length(a1)/(length(a1)-1)/length(unique(v11$Date)),0)
+        
+# Calculate projected late/on time split assuming 20% on time
+        add_on_time <- round(add_moves*.2,digits = 0)
+        add_late <- round(add_moves*.8,digits = 0)
+        
+# Add Moves
+        v12 <- v11 %>% select(Employee_ID,Moves,Hours,On_Time,Late) 
+        v12$Moves[] <- v12$Moves+add_moves
+        v12$On_Time[] <- v12$On_Time+add_on_time
+        v12$Late[] <- v12$Late+add_late
+        
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target 
+       v13 <- v12 %>% mutate(Target_Moves = pmax(5*Hours-Moves,0))
+        
+# Create new column with the min quantity of additional On Time moves needed to hit 5 moves/hr target required to meet 78% on time threshold 
+       v14 <- v13 %>% mutate(Min_On_Time = pmax(round(.78*(Moves+Target_Moves)-On_Time,digits=0),0))
+       
+# Create new column with difference between Min_On_Time and Target_Moves
+       v15 <- v14 %>% mutate(OK_Late = pmax(Target_Moves - Min_On_Time,0))
+       
+# gather into new dataframe so uncount function will work
+      v16 <- v15 %>%
+        select(Employee_ID,Min_On_Time,OK_Late) %>%
+        gather(key="Category", value = "Moves",-Employee_ID)
+# Uncount
+      v17 <- v16 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+       
+# Create Visualization
+
+v18 <- ggplot(v17, aes(x = Employee_ID, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Min On Time", "Okay Late")) +
+labs(x="Driver",y="Moves",title="Qty of Moves Required to Meet Performance Standard")
+  theme_light()
+
+ggplotly(v18)
+
+```
+
+```{r}
+       v13 <- v12
+        v13$Moves[] <- v13$Moves+add_moves
+View(v13)
+
+```
