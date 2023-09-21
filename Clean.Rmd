@@ -60,7 +60,7 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
         colnames(cms4)[1] <- "Employee_ID"
 
         ## Label the metric column 
-        colnames(cms4)[2] <- "Completed Moves"
+        colnames(cms4)[2] <- "Moves"
         
         ## Remove first 2 rows
                 cms4 = cms4[-c(1:2),]
@@ -74,7 +74,7 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
                 pivot_longer(
                         cols = !"Employee_ID",
                         names_to = "Date",
-                        values_to = "Completed Moves",
+                        values_to = "Moves",
                 )
         ## Convert Date column to date data-class
         cms5$Date <- mdy(cms5$Date)
@@ -93,7 +93,7 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
         colnames(hrw4)[1] <- "Employee_ID"
 
         ## Label the metric column 
-        colnames(hrw4)[2] <- "Hours Worked"
+        colnames(hrw4)[2] <- "Hours"
         
         ## Remove first 2 rows
                 hrw4 = hrw4[-c(1:2),]
@@ -106,7 +106,7 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
                 pivot_longer(
                         cols = !"Employee_ID",
                         names_to = "Date",
-                        values_to = "Hours Worked",
+                        values_to = "Hours",
                 )
         ## Convert Date column to date data-class
         hrw5$Date <- mdy(hrw5$Date)
@@ -159,12 +159,10 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
         colnames(otp4)[1] <- "Employee_ID"
 
         ## Label the metric column 
-        colnames(otp4)[2] <- "On-Time Moves"
+        colnames(otp4)[2] <- "Percent"
         
         ## Remove first 2 rows
                 otp4 = otp4[-c(1:2),]
- 
-        
                 
         ## Change the data class from character to numeric
         otp4[ ,c1] <- apply(otp4[ ,c1], 2, function(x) as.numeric(as.character(x)))
@@ -174,7 +172,7 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
                 pivot_longer(
                         cols = !"Employee_ID",
                         names_to = "Date",
-                        values_to = "On-Time Moves",
+                        values_to = "Percent",
                 )
         ## Convert Date column to date data-class
         otp5$Date <- mdy(otp5$Date)
@@ -184,11 +182,25 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
        v1 <- merge(x = cms5, y = hrw5)
        v2 <- merge(x = v1, y = mph5)
        v3 <- merge(x = v2, y = otp5) 
-        
-        
-        
-View(v3)
-
 ```
 
+# Add Calculated Columns
+```{r}
+# Remove NA values
+        v4 <- v3 %>% filter(!is.na(MPH))
+
+# Create new column with quantity of On Time Moves
+       v5 <- v4 %>% mutate(On_Time = round(Moves * Percent/100,digits = 0))
+
+# Create new column with quantity of Late Moves
+        v6 <- v5 %>% mutate(Late = Moves - On_Time)
+        
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target
+       
+
+       
+View(v6)
+
+
+```
 
