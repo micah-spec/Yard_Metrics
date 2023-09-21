@@ -9,21 +9,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This document is intended to import the data and clean it for downstream analytics and visualization.
+This document is intended to import the data and clean it for downstream analytics and visualization. 
 
 # Load Libraries
 ```{r}
-## Step 1
 library(tidyverse)
 library(data.table)
 library(knitr)
 ```
 
-# Import CSV
+# Import and clean CSV
 ```{r}
 ## Step 1
-library(tidyverse)
-library(data.table)
 
 dat <- read.csv("2023_02_summary.csv", header=FALSE)
 
@@ -38,21 +35,174 @@ dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern =",", replacement="")
 
 ## Remove % symbols, which if present returns NA upon conversion to numeric class (e.g. 98% = 98)
 dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern ="%", replacement="")
-```
 
 # Extract vector of Employee IDs
-```{r}
 employee_ID <- pull(dat,V2)
 employee_ID <- unique(employee_ID)
 employee_ID <- employee_ID[3:length(employee_ID)]
+
+
+
+```
+
+
+```{r}
+# Extract completed moves metric from dataset
+        cms1 <- dat[, dat[2, ] == "Completed Moves"]
+        cms2 <- dat[, c(2,length(dat)-3)]
+        cms3 <- cbind(cms2, cms1)
+
+        ## Make the date row the header
+        cms4 <- cms3
+        colnames(cms4) <- cms3[1, ]
+
+        ## Label the Employee ID column
+        colnames(cms4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(cms4)[2] <- "Completed Moves"
+        
+        ## Remove first 2 rows
+                cms4 = cms4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        c1 <- c(2:length(cms4))
+        cms4[ ,c1] <- apply(cms4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        cms5 <- cms4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Completed Moves",
+                )
+        ## Convert Date column to date data-class
+        cms5$Date <- mdy(cms5$Date)
+        cms5 <- as.data.frame(cms5)
+        
+# Extract Hours Worked metric from dataset
+        hrw1 <- dat[, dat[2, ] == "Hours Worked"]
+        hrw2 <- dat[, c(2,length(dat)-3)]
+        hrw3 <- cbind(hrw2, hrw1)
+
+        ## Make the date row the header
+        hrw4 <- hrw3
+        colnames(hrw4) <- hrw3[1, ]
+
+        ## Label the Employee ID column
+        colnames(hrw4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(hrw4)[2] <- "Hours Worked"
+        
+        ## Remove first 2 rows
+                hrw4 = hrw4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        hrw4[ ,c1] <- apply(hrw4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        hrw5 <- hrw4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Hours Worked",
+                )
+        ## Convert Date column to date data-class
+        hrw5$Date <- mdy(hrw5$Date)
+        hrw5 <- as.data.frame(hrw5)
+
+# Extract MPH metric from dataset
+        mph1 <- dat[, dat[2, ] == "MPH"]
+        mph2 <- dat[, c(2,length(dat)-3)]
+        mph3 <- cbind(mph2, mph1)
+
+        ## Make the date row the header
+        mph4 <- mph3
+        colnames(mph4) <- mph3[1, ]
+
+        ## Label the Employee ID column
+        colnames(mph4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(mph4)[2] <- "MPH"
+        
+        ## Remove first 2 rows
+                mph4 = mph4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        mph4[ ,c1] <- apply(mph4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        mph5 <- hrw4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "MPH",
+                )
+        ## Convert Date column to date data-class
+        mph5$Date <- mdy(mph5$Date)
+        mph5 <- as.data.frame(mph5)
+
+                
+ # Extract OTP metric from dataset
+        otp1 <- dat[, dat[2, ] == "On-Time Moves "]
+  
+                otp2 <- dat[, c(2,length(dat)-3)]
+        otp3 <- cbind(otp2, otp1)
+
+        ## Make the date row the header
+        otp4 <- otp3
+        colnames(otp4) <- otp3[1, ]
+
+        ## Label the Employee ID column
+        colnames(otp4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(otp4)[2] <- "On-Time Moves"
+        
+        ## Remove first 2 rows
+                otp4 = otp4[-c(1:2),]
+ 
+        
+                
+        ## Change the data class from character to numeric
+        otp4[ ,c1] <- apply(otp4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+                
+        ## Pivot
+        otp5 <- otp4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "On-Time Moves",
+                )
+        ## Convert Date column to date data-class
+        otp5$Date <- mdy(otp5$Date)
+        otp5 <- as.data.frame(otp5)  
+        
+# Merge Metrics
+       v1 <- merge(x = cms5, y = hrw5)
+       v2 <- merge(x = v1, y = mph5)
+       v3 <- merge(x = v2, y = otp5) 
+        
+        
+        
+View(v3)
+
+```
+
+
+
+
+
+
+```{r}
+
 ```
 
 # Clean imported csv to create tidy dataframes for each of the 4 metrics 
 ```{R}
-## Remove rows below Employee_Id in data
-tempVar1 <- length(employee_ID)+3
-tempVar2 <- nrow(dat)
-dat <- dat[-c(tempVar1:tempVar2),]
+
 
 ## Remove commas, which if present returns NA upon conversion to numeric class (e.g 1,215 to 1215)
 tempVar3 <- c(3:length(dat))
@@ -578,7 +728,7 @@ v14
 
 
 ```{r}
-# working through smry_viz
+# smry_viz function
 
 smry_viz <- function(shift,id){
 # Extract completed moves metric from dataset
@@ -618,9 +768,6 @@ smry_viz <- function(shift,id){
         v6$Date <- mdy(v6$Date)
         v6 <- as.data.frame(v6)
         
-
-        
-        
 # Extract moves per hour metric from dataset
         m1 <- dat[, dat[2, ] == "MPH"]
         m2 <- dat[, c(2,length(dat)-3)]
@@ -657,12 +804,6 @@ smry_viz <- function(shift,id){
 # Convert Date column to date data-class
         m6$Date <- mdy(m6$Date)
         m6 <- as.data.frame(m6)
-       
-        
-        
-        
-        
-         
       
 # Extract hours worked metric from dataset
         h1 <- dat[, dat[2, ] == "Hours Worked"]
@@ -702,11 +843,88 @@ smry_viz <- function(shift,id){
         h6 <- as.data.frame(h6)
       
         
+# Extract on time percent metric from dataset
+        m1 <- dat[, dat[2, ] == "MPH"]
+        m2 <- dat[, c(2,length(dat)-3)]
+        m3 <- cbind(m2, m1)
+
+# Make the date row the header
+        m4 <- m3
+        colnames(m4) <- m3[1, ]
+
+# Label the Employee ID column
+        colnames(m4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(m4)[2] <- "Total"
+        
+# Remove first 2 rows
+                m4 = m4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        m4[ ,c1] <- apply(m4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        m5 <- m4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        m6 <- m5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "MPH",
+                )
+# Convert Date column to date data-class
+        m6$Date <- mdy(m6$Date)
+        m6 <- as.data.frame(m6)
+      
+# Extract on time percent metric from dataset
+        o1 <- dat[, dat[2, ] == "On-Time Moves "]
+        o2 <- dat[, c(2,length(dat)-3)]
+        o3 <- cbind(o2, o1)
+
+# Make the date row the header
+        o4 <- o3
+        colnames(o4) <- o3[1, ]
+
+# Label the Employee ID column
+        colnames(o4)[1] <- "Employee_ID"
+
+# Label the Total column 
+        colnames(o4)[2] <- "Total"
+        
+# Remove first 2 rows
+                o4 = o4[-c(1:2),]
+        
+# Change the data class from character to numeric
+        c1 <- c(2:length(m4))
+        o4[ ,c1] <- apply(o4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+
+# Filter by shift
+        o5 <- o4 %>% filter(Employee_ID %in% shift)
+        
+# Pivot
+        o6 <- o5[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "On_Time",
+                )
+# Convert Date column to date data-class
+        o6$Date <- mdy(o6$Date)
+        o6 <- as.data.frame(o6)
+        
 # Join Completed and MPH
        v7 <- merge(x = v6, y = m6)
         
 # Join with hours
        v8 <- merge(x = v7, y = h6) 
+       
+# Join with on time
+       v8 <- merge(x = v8, y = o6) 
           
 # Remove NA and NAN values
         v8 <- v8 %>% filter(!is.na(Total))
@@ -720,17 +938,14 @@ smry_viz <- function(shift,id){
         Moves <- c(sum(v9$Total),sum(v8$Total/length(shift)))
         MPH <- c(mean(v9$MPH),mean(v8$MPH))
         Hours <- c(sum(v9$Hours),sum(v8$Hours)/length(shift))
+        On_Time <- c(mean(v9$On_Time),mean(v8$On_Time))
         
-        v10 <- data.table(Driver,Moves,MPH,Hours)
+        v10 <- data.table(Driver,Moves,On_Time,MPH,Hours)
         
            # Round
        v11 <- v10 %>% mutate(across(is.numeric, round, digits=1))
         
         kable(v11)
-        
-        
-        
-
 }
 ```
 
