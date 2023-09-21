@@ -195,11 +195,11 @@ dat <- read.csv("2023_02_summary.csv", header=FALSE)
 # Create new column with quantity of Late Moves
         v6 <- v5 %>% mutate(Late = Moves - On_Time)
         
-# Create new column with quantity of additional moves needed to hit 5 moves/hr target
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target 
+       v7 <- v6 %>% mutate(Target_Moves = pmax(5*Hours-Moves,0))
+        
        
-
-       
-View(v6)
+View(v7)
 
 
 ```
