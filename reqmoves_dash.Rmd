@@ -1,0 +1,110 @@
+---
+title: "Requested Moves 09-2023"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+    
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(data.table)
+library(plotly)
+
+# Step 1: Clean Data
+req <- read.csv("092023_reqmoves.csv")
+
+## Remove nonessential rows and columns  
+req <- req[-c(1,27:38),-c(1,27)]
+
+## Change name of date column
+colnames(req)[1] <- ("Date") 
+
+## Convert Date column from character class to date class 
+req$Date <- mdy(req$Date)
+
+## Add Weekday column and reorder such that is located after the Date column
+req$Weekday <- wday(req$Date)
+req <- req[,c(1,length(req),2:25)]
+
+## Pivot Hours into a column
+req <- req %>% pivot_longer(!c(Date, Weekday),names_to = "Hour", values_to = "Count")
+
+## Remove x from hour column
+req$Hour<-gsub("X","",as.character(req$Hour))
+
+## Convert Hour and Count columns to numeric class
+req <- req %>% 
+        mutate(Hour = as.numeric(Hour)) %>% 
+        mutate(Count = as.numeric(Count))
+
+# Step 2: Define Shifts
+
+## Shift a1
+a1 <- req %>% filter(Hour >= 6 & Hour <= 17 &  Weekday %in% c(7, 1, 2)) %>% drop_na()
+
+## Shift a2: Monday - Thursday 0600 - 1600
+a2 <- req %>%
+  filter((Hour >= 18 & Hour <= 23 &  Weekday %in% c(7, 1, 2)) | (Hour >= 0 & Hour <= 5 &  Weekday %in% c(1, 2, 3)))  %>% drop_na()
+
+## Shift b1: Monday - Thursday 0600 - 1600
+b1 <- req %>% filter(Hour >= 6 & Hour <= 15 &  Weekday >= 3 & Weekday <= 6) 
+
+## Shift b2: Monday - Thursday 0600 - 1600
+b2 <- req %>%
+  filter((Hour >= 16 & Hour <= 23 &  Weekday >= 3 & Weekday <= 6) | (Hour >= 0 & Hour <= 1 &  Weekday >= 4 & Weekday <= 7)) 
+
+# Step 3: Create Function to output Req Moves Plots
+reqmv <- function(df,qty,title) {
+
+## Calculate the 75th percentile for each hour
+hour_75th_percentiles <- df %>%
+group_by(Hour) %>%
+summarize(q75 = quantile(Count, .75))
+
+## Create the ggplot visualization
+lolli <- ggplot(hour_75th_percentiles, aes(x = Hour, y = q75)) +
+geom_point()+  
+geom_segment(aes(x=Hour,xend = Hour, y=0,yend = q75)) +            
+geom_hline(yintercept = qty*5,linetype = "dashed")+
+annotate("text", x = 5.6, y = qty*5-1, label = "5 MPH")+            
+geom_hline(yintercept = qty*8,linetype = "dashed")+   
+annotate("text", x = 5.6, y = qty*8-1, label = "8 MPH")+              
+expand_limits(y = 0)+
+labs(x="Hour of Day",y="75th Percentile of Requested Moves",title=title)  
+ggplotly(lolli)        
+
+}
+
+```
+
+Row 
+-------------------------------------
+    
+### Shift B1
+    
+```{r}
+reqmv(b1,6,"September 75th Percentile of Requested Moves for Shift B1 with 6 Drivers")
+```
+
+### Shift B2
+```{r}
+reqmv(b2,4,"September 75th Percentile of Requested Moves for Shift B2 with 4 Drivers")
+```
+
+
+Row
+-------------------------------------
+    
+### Shift A1
+    
+```{r}
+reqmv(a1,4,"September 75th Percentile of Requested Moves for Shift A1 with 4 Drivers")
+```
+
+### Shift A2
+```{r}
+reqmv(a2,4,"September 75th Percentile of Requested Moves for Shift A2 with 4 Drivers")
+```
+
