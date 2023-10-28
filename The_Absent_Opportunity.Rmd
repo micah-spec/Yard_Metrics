@@ -1,0 +1,120 @@
+---
+title: "The Absent Opportunity"
+author: "Micah Turner"
+date: "2023-05-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# The Absent Opportunity
+This analysis explores the concept of using unplanned absences from work derived from a variety of factors like the retention rate and sick days as an opportunity to increase productivity leveraging data driven decision making.
+
+## Background
+There are two productivity metrics used to evaluate driver performance. The first of these is moves per hour (MPH), where the goal is to achieve 5 mph. The second driver performance metric is On Time Percent (OTP), where the goal is to achieve 78% of moves on time. 
+
+```{r}
+### Feb, 2023 MPH
+smry_v3 <- smry_v3 %>%
+  mutate(ID = fct_reorder(ID, MPH))
+
+mph_barchart <- ggplot(smry_v3) +
+  geom_bar(aes(x = ID, y = MPH),stat = "identity") +
+  geom_hline(yintercept = 12.2, color = "red") +
+  coord_flip()+
+  annotate("text", x = 5, y = 8, label = "4% of drivers meet performance standard")+
+  labs(title = "Feb, 2023 MPH")
+
+mph_barchart
+```
+
+
+```{r}
+### Feb, 2023 MPH
+smry_v3 <- smry_v3 %>%
+  mutate(ID = fct_reorder(ID, Tgt_Moves))
+
+target_barchart <- ggplot(smry_v3, aes(x = ID, y = Tgt_Moves, fill=Qty_OnTime)) +
+  geom_bar(stat = "identity", position = "stack") +
+  coord_flip()+
+  scale_fill_gradient2(low = "black", high = "red")+
+  labs(title = "Feb, 2023 Performance Gap")
+
+target_barchart
+```
+
+```{r}
+s2
+```
+
+## Data
+
+
+```{r}
+### Extract the 2nd column (total) from the dataframes constructed in the driver_eval function and make them the same length
+mph_tgt <- mph[,2]
+mph_tgt2 <- mph_tgt[2:28]
+otp_tgt <- otp[,2]
+otp_tgt2 <- otp_tgt[2:28]
+cms_tgt <- cms[,2]
+cms_tgt2 <- cms_tgt[2:28]
+hrw_tgt <- hrw[,2]
+hrw_tgt2 <- hrw_tgt[2:28]
+
+### Create a vector with calculation results for the number of moves required to bring a driver's mph equal to 5
+target <- sapply(1:length(a_number), function(x) solve(1/hrw_tgt2[x], 5-cms_tgt2[x]/hrw_tgt2[x]))
+
+### Create an intermediary vector to be used for a follow on calculation - this calculates the total number of on time moves
+otm <- cms_tgt2*otp_tgt2/100
+
+### Get rid of decimal in the target vector
+target1 <- round(target, digits = 0)
+
+### Calculate the number of target moves that need to be on time to stay within the 78% on time performance metric
+s2 <- sapply(1:length(a_number), function(x) {
+  solve(1, .78 * (cms_tgt2[x] + target[x]) - otm[x])
+})
+
+### Get rid of the decimal in the s2 vector
+s2 <- round(s2, digits = 0)
+
+### Replace negative values with 0
+target1 <- pmax(target1,0)
+s2 <- pmax(s2,0)
+
+### Trim empty spaces from vectors
+target1 <- trimws(target1)
+s2 <- trimws(s2)
+
+### In the darkness bind them
+smry_v3 <- cbind(a_number,mph_tgt2,target1,s2)
+
+### Rename Columns
+new_col_names <- c("ID","MPH","Tgt_Moves","Qty_OnTime")
+colnames(smry_v3) <- new_col_names
+
+### Change type to dataframe
+smry_v3 <- as.data.frame(smry_v3)
+
+###Make them numeric again
+smry_v3[ ,-1] <- apply(smry_v3[ ,-1], 2, function(x) as.numeric(as.character(x)))
+
+###QC
+View(smry_v3)
+```
+
+```{r}
+otm <- cms_tgt2*otp_tgt2/100
+s2 <- sapply(1:length(a_number), function(x) {
+  solve(1, .78 * (cms_tgt2[x] + target[x]) - otm[x])
+})
+s2
+reqotp <- s2/target
+reqotp
+```
+
+```{r}
+smry_v3 <- replace(smry_v3, smry_v3 < 0, 0)
+```

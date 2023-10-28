@@ -1,0 +1,317 @@
+---
+title: "Short Shift Analysis from 2023-02-05 to 2023-02-12"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+    
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(data.table)
+library(plotly)
+
+dat <- read.csv("2023_02_summary.csv", header=FALSE)
+
+# Remove metadata about csv (e.g. export date/time)        
+
+        ## Create Vector of Employee IDs
+        employee_ID <- pull(dat,V2)
+        employee_ID <- unique(employee_ID)
+        employee_ID <- employee_ID[3:length(employee_ID)]
+
+        ## Remove rows below Employee_Id in data
+        tempVar1 <- length(employee_ID)+3
+        tempVar2 <- nrow(dat)
+        dat <- dat[-c(tempVar1:tempVar2),]
+
+# Remove problematic punctuation and symbols
+        
+        ## Remove commas, which if present returns NA upon conversion to numeric class (e.g 1,215 to 1215)
+        tempVar3 <- c(3:length(dat))
+        dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern =",", replacement="")
+
+        ## Remove % symbols, which if present returns NA upon conversion to numeric class (e.g. 98% = 98)
+        dat[tempVar3] <- lapply(dat[tempVar3], gsub, pattern ="%", replacement="")
+
+
+# Extract completed moves metric from data
+        cms1 <- dat[, dat[2, ] == "Completed Moves"]
+        cms2 <- dat[, c(2,length(dat)-3)]
+        cms3 <- cbind(cms2, cms1)
+
+        ## Make the date row the header
+        cms4 <- cms3
+        colnames(cms4) <- cms3[1, ]
+
+        ## Label the Employee ID column
+        colnames(cms4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(cms4)[2] <- "Moves"
+        
+        ## Remove first 2 rows
+                cms4 = cms4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        c1 <- c(2:length(cms4))
+        cms4[ ,c1] <- apply(cms4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        cms5 <- cms4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Moves",
+                )
+        ## Convert Date column to date data-class
+        cms5$Date <- mdy(cms5$Date)
+        cms5 <- as.data.frame(cms5)
+        
+# Extract Hours Worked metric from data
+        hrw1 <- dat[, dat[2, ] == "Hours Worked"]
+        hrw2 <- dat[, c(2,length(dat)-3)]
+        hrw3 <- cbind(hrw2, hrw1)
+
+        ## Make the date row the header
+        hrw4 <- hrw3
+        colnames(hrw4) <- hrw3[1, ]
+
+        ## Label the Employee ID column
+        colnames(hrw4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(hrw4)[2] <- "Hours"
+        
+        ## Remove first 2 rows
+                hrw4 = hrw4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        hrw4[ ,c1] <- apply(hrw4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        hrw5 <- hrw4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Hours",
+                )
+        ## Convert Date column to date data-class
+        hrw5$Date <- mdy(hrw5$Date)
+        hrw5 <- as.data.frame(hrw5)
+
+# Extract Moves per Hour metric from data
+        mph1 <- dat[, dat[2, ] == "MPH"]
+        mph2 <- dat[, c(2,length(dat)-3)]
+        mph3 <- cbind(mph2, mph1)
+
+        ## Make the date row the header
+        mph4 <- mph3
+        colnames(mph4) <- mph3[1, ]
+
+        ## Label the Employee ID column
+        colnames(mph4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(mph4)[2] <- "MPH"
+        
+        ## Remove first 2 rows
+                mph4 = mph4[-c(1:2),]
+        
+        ## Change the data class from character to numeric
+        mph4[ ,c1] <- apply(mph4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+        
+        ## Pivot
+        mph5 <- mph4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "MPH",
+                )
+        ## Convert Date column to date data-class
+        mph5$Date <- mdy(mph5$Date)
+        mph5 <- as.data.frame(mph5)
+
+                
+ # Extract On-Time Percent metric from data
+        otp1 <- dat[, dat[2, ] == "On-Time Moves "]
+  
+                otp2 <- dat[, c(2,length(dat)-3)]
+        otp3 <- cbind(otp2, otp1)
+
+        ## Make the date row the header
+        otp4 <- otp3
+        colnames(otp4) <- otp3[1, ]
+
+        ## Label the Employee ID column
+        colnames(otp4)[1] <- "Employee_ID"
+
+        ## Label the metric column 
+        colnames(otp4)[2] <- "Percent"
+        
+        ## Remove first 2 rows
+                otp4 = otp4[-c(1:2),]
+                
+        ## Change the data class from character to numeric
+        otp4[ ,c1] <- apply(otp4[ ,c1], 2, function(x) as.numeric(as.character(x)))
+                
+        ## Pivot
+        otp5 <- otp4[,-2] %>%
+                pivot_longer(
+                        cols = !"Employee_ID",
+                        names_to = "Date",
+                        values_to = "Percent",
+                )
+        ## Convert Date column to date data-class
+        otp5$Date <- mdy(otp5$Date)
+        otp5 <- as.data.frame(otp5)  
+        
+# Merge Metrics
+       v1 <- merge(x = cms5, y = hrw5)
+       v2 <- merge(x = v1, y = mph5)
+       v3 <- merge(x = v2, y = otp5) 
+       
+# Remove NA values
+        v4 <- v3 %>% filter(!is.na(MPH))
+
+# Create new column with quantity of On Time Moves
+       v5 <- v4 %>% mutate(On_Time = round(Moves * Percent/100,digits = 0))
+
+# Create new column with quantity of Late Moves
+        v6 <- v5 %>% mutate(Late = Moves - On_Time)
+        
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target 
+       v7 <- v6 %>% mutate(Target_Moves = pmax(5*Hours-Moves,0))
+        
+# Create new column with the min quantity of additional On Time moves needed to hit 5 moves/hr target required to meet 78% on time threshold 
+       v8 <- v7 %>% mutate(Min_On_Time = pmax(round(.78*(Moves+Target_Moves)-On_Time,digits=0),0))
+       
+# Create new column with difference between Min_On_Time and Target_Moves
+       v9 <- v8 %>% mutate(OK_Late = pmax(Target_Moves - Min_On_Time,0))
+       
+# Define Shifts 
+        a1 <- c("A633224","A634341","A639084","A649672")
+        a2 <- c("A582797","A651095","A649670","A650934")
+        b1 <- c("A593317","A642379","A617437","A648278","A644891")
+        b2 <- c("A639650","A641937","A642929","A650739")
+        
+target <- function(from,to,shift){
+# Filter by Date
+        v10 <- v9 %>% filter(between(Date, as.Date(from), as.Date(to)))
+
+# Filter by Shift
+        v11 <- v10 %>% filter(Employee_ID %in% shift)
+                
+# gather into new dataframe so uncount function will work
+      v12 <- v11 %>%
+        select(Employee_ID,Min_On_Time,OK_Late) %>%
+        gather(key="Category", value = "Moves",-Employee_ID)
+# Uncount
+      v13 <- v12 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+    
+      
+# Create Visualization
+
+v14 <- ggplot(v13, aes(x = Employee_ID, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Min On Time", "Okay Late")) +
+labs(x="Driver",y="Moves",title="Qty of Moves Required to Meet Performance Standard")
+  theme_light()
+
+ggplotly(v14)
+}
+
+short_shift <- function(from,to,shift,number){
+
+# Filter by Date
+        v10 <- v9 %>% filter(between(Date, as.Date(from), as.Date(to)))
+
+# Filter by Shift
+        v11 <- v10 %>% filter(Employee_ID %in% shift)
+        
+# Calculate average moves/day for each driver, and then divide that by the number of drivers less 1 to distribute the short shift moves among remaining drivers
+        add_moves <- round(sum(v11$Moves)/length(a1)/(length(a1)-1)/length(unique(v11$Date)),0)
+        
+# Calculate projected late/on time split assuming 20% on time
+        add_on_time <- round(add_moves*.2,digits = 0)
+        add_late <- round(add_moves*.8,digits = 0)
+        
+# Add Moves
+        v12 <- v11 %>% select(Employee_ID,Moves,Hours,On_Time,Late) 
+        v12$Moves[] <- v12$Moves+add_moves
+        v12$On_Time[] <- v12$On_Time+add_on_time
+        v12$Late[] <- v12$Late+add_late
+        
+# Create new column with quantity of additional moves needed to hit 5 moves/hr target 
+       v13 <- v12 %>% mutate(Target_Moves = pmax(5*Hours-Moves,0))
+        
+# Create new column with the min quantity of additional On Time moves needed to hit 5 moves/hr target required to meet 78% on time threshold 
+       v14 <- v13 %>% mutate(Min_On_Time = pmax(round(.78*(Moves+Target_Moves)-On_Time,digits=0),0)*number)
+       
+# Create new column with difference between Min_On_Time and Target_Moves
+       v15 <- v14 %>% mutate(OK_Late = pmax(Target_Moves - Min_On_Time,0))
+       
+# gather into new dataframe so uncount function will work
+      v16 <- v15 %>%
+        select(Employee_ID,Min_On_Time,OK_Late) %>%
+        gather(key="Category", value = "Moves",-Employee_ID)
+# Uncount
+      v17 <- v16 %>%
+        uncount(Moves) %>%
+        mutate(Moves = 1)
+       
+# Create Visualization
+
+v18 <- ggplot(v17, aes(x = Employee_ID, fill = Category)) +
+  geom_bar(stat = "count", position = "stack") +
+  scale_fill_manual(values = c("red", "blue"), labels = c("Min On Time", "Okay Late")) +
+labs(x="Driver",y="Moves")
+  theme_light()
+
+ggplotly(v18)
+}
+```
+
+Row 
+-------------------------------------
+    
+### Shift A1
+    
+```{r}
+target("2023-02-05","2023-02-12",a1)
+```
+
+### Short Shift = 1
+```{r}
+short_shift("2023-02-05","2023-02-12",a1,1)
+```
+
+### Short Shift = 2
+```{r}
+short_shift("2023-02-05","2023-02-12",a1,2)
+```
+
+
+Row
+-------------------------------------
+    
+### Shift B1
+    
+```{r}
+target("2023-02-05","2023-02-12",b1)
+```
+
+### Short Shift = 1
+```{r}
+short_shift("2023-02-05","2023-02-12",b1,1)
+```
+
+### Short Shift = 2
+```{r}
+short_shift("2023-02-05","2023-02-12",b1,2)
+```
+
+

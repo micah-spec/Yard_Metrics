@@ -1,0 +1,219 @@
+---
+title: "Driver_Performance_Evaluation"
+author: "Micah Turner"
+date: "2023-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Scope
+
+The current (April, 2023) monthly driver evaluation process features export of a csv file from a relational database containing a summary of driver metrics over a specified time period (typically one calender month). Individual driver performance metrics are manually extracted from this summary and compiled into a report featuring the following information for each day of the specified time period, in addition to aggregates as depicted below;
+- Completed moves (cms)
+- Completed moves aggregate 
+- Moves per hour (mph)
+- Moves per hour aggregate 
+- On time percent (otp)
+- On time percent aggregate 
+
+The purpose of this project is to improve this report by adding shift averages for the above metrics, adding hours worked (to track missed days, early departures, and extra shifts), and then automate the production of this report using the R programming langauge. This project is on a volunteer basis without financial compensation / allocated billable hours, for the purpose of gaining experience and going above and beyond.
+
+
+# Approach
+
+While I expect there is a more efficient method, this is my first independent project using R and I am breaking the problem down into it's individual components and then solving them one by one. The approach features four steps;
+- Step 1: Load the libraries required for the solution
+- Step 2: Read the csv file into R and prepare it for processing
+- Step 3: Create a custom function (driver_eval) that takes a driver ID as an argument and outputs a ready to print pdf file containing the report as defined by the project scope
+- Step 4: Create a "for loop" that takes a vector containing all the driver IDs and runs them through the driver_eval function
+
+All four steps are combined into a single "code chunk" for the purpose of minimizing the number of manual inputs required to produce the reports, however, they were created piece by piece (see GitHub version history). The appendix contains partition "code chunks" to make debugging easier. 
+
+Also of note, calender months have a variable number of days while the number of drivers fluctuates over time, and a design goal is to turn this process over to operational users who do not understand the code. Therefore, a derived requirement for the code is to work regardless of the number of days in the summary and the number of drivers contained in that summary so the end user is not required to manually adjust either variable. 
+
+# Code
+# Load Libraries
+```{r}
+## Step 1
+library(tidyr)
+library(data.table)
+library(dplyr)
+library(gridExtra)
+```
+
+```{r}
+
+## Step 2: Read the csv file into R and prepare it for processing
+
+### Import Summary
+gid <- "1yh--wWbGDo0cfX-CzSV9Qrlb-9r76JGv" #Google Drive document ID
+smry_v1 <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", gid), header=FALSE)
+
+### Create a_number vector: Driver ID's are referred to as "A numbers" because they start with that letter
+a_number_v1 <- pull(smry_v1,V2)
+a_number_v2 <- unique(a_number_v1)
+a_number <- a_number_v2[3:length(a_number_v2)]
+
+### Remove rows below a_number in smry_v1 dataframe
+c1 <- length(a_number)+3
+c2 <- nrow(smry_v1)
+smry_v2 <- smry_v1[-c(c1:c2),]
+
+### Remove commas, which if present returns NA upon conversion to numeric class (e.g 1,215 to 1215)
+c3 <- c(3:length(smry_v2))
+smry_v2[c3] <- lapply(smry_v2[c3], gsub, pattern =",", replacement="")
+
+### Remove % symbols, which if present returns NA upon conversion to numeric class (e.g. 98% = 98)
+smry_v2[c3] <- lapply(smry_v2[c3], gsub, pattern ="%", replacement="")
+
+### Completed Moves
+cms_v1 <- smry_v2[, smry_v2[2, ] == "Completed Moves"]
+cms_v2 <- smry_v2[, c(2,length(smry_v2)-3)]
+cms_v3 <- cbind(cms_v2, cms_v1)
+
+### Moves per Hour
+mph_v1 <- smry_v2[, smry_v2[2, ] == "MPH"]
+mph_v2 <- smry_v2[, c(2,length(smry_v2)-1)]
+mph_v3 <- cbind(mph_v2, mph_v1)
+
+### On Time Percentage
+otp_v1 <- smry_v2[, smry_v2[2, ] == "On-Time Moves "]
+otp_v2 <- smry_v2[, c(2,length(smry_v2))]
+otp_v3 <- cbind(otp_v2, otp_v1)
+
+### Hours Worked
+hrw_v1 <- smry_v2[, smry_v2[2, ] == "Hours Worked"]
+hrw_v2 <- smry_v2[, c(2,length(smry_v2)-2)]
+hrw_v3 <- cbind(hrw_v2, hrw_v1)
+
+### Make row 1, which contains dates, the header row and then delete row 1
+cms_v4 <- cms_v3
+colnames(cms_v4) <- cms_v3[1, ]
+cms_v4 = cms_v4[-1,]
+
+mph_v4 <- mph_v3
+colnames(mph_v4) <- mph_v3[1, ]
+mph_v4 = mph_v4[-1,]
+
+otp_v4 <- otp_v3
+colnames(otp_v4) <- otp_v3[1, ]
+otp_v4 = otp_v4[-1,]
+
+hrw_v4 <- hrw_v3
+colnames(hrw_v4) <- hrw_v3[1, ]
+hrw_v4 = hrw_v4[-1,]
+
+### Label the column containing A numbers as such
+colnames(cms_v4)[1] <- "Driver_ID"
+colnames(mph_v4)[1] <- "Driver_ID"
+colnames(otp_v4)[1] <- "Driver_ID"
+colnames(hrw_v4)[1] <- "Driver_ID"
+
+### Label the aggregate column appropriately
+colnames(cms_v4)[2] <- "Total"
+colnames(mph_v4)[2] <- "Total"
+colnames(otp_v4)[2] <- "Total"
+colnames(hrw_v4)[2] <- "Total"
+
+### Change the data class from character to numeric
+c4 <- c(2:length(cms_v4))
+cms_v4[ ,c4] <- apply(cms_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+mph_v4[ ,c4] <- apply(mph_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+otp_v4[ ,c4] <- apply(otp_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+hrw_v4[ ,c4] <- apply(hrw_v4[ ,c4], 2, function(x) as.numeric(as.character(x)))
+
+### Create new dataframe
+cms_v5 <- cms_v4
+mph_v5 <- mph_v4
+otp_v5 <- otp_v4
+
+### Calculate mean of all numeric columns
+cms_v5 <- cms_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+mph_v5 <- mph_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+otp_v5 <- otp_v4 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+
+### Label the new row 
+Driver_ID <- "Average"
+cms_v5$Driver_ID <- Driver_ID
+mph_v5$Driver_ID <- Driver_ID
+otp_v5$Driver_ID <- Driver_ID
+
+### Reorder A number column from last to first
+cms_v5 <- cms_v5[, c(length(cms_v5),1:length(cms_v5)-1)]
+mph_v5 <- mph_v5[, c(length(mph_v5),1:length(mph_v5)-1)]
+otp_v5 <- otp_v5[, c(length(otp_v5),1:length(otp_v5)-1)]
+
+### In the darkness bind them
+cms_v6 <- rbind(cms_v4,cms_v5)
+mph_v6 <- rbind(mph_v4,mph_v5)
+otp_v6 <- rbind(otp_v4,otp_v5)
+
+### Round to appropriate digit
+cms_v7 <- cms_v6 %>% mutate(across(is.numeric, round, digits=1))
+mph_v7 <- mph_v6 %>% mutate(across(is.numeric, round, digits=1))
+otp_v7 <- otp_v6 %>% mutate(across(is.numeric, round, digits=1))
+
+### Clean up variable names
+cms <- cms_v7
+mph <- mph_v7
+otp <- otp_v7
+hrw <- hrw_v4
+
+## Step 3
+
+driver_eval <- function(anumber){
+             ### Extract each metric
+        acms <- cms[cms$Driver_ID %in% c(anumber,"Average"),]
+        amph <- mph[mph$Driver_ID %in% c(anumber,"Average"),]
+        aotp <- otp[otp$Driver_ID %in% c(anumber,"Average"),]
+        ahrw <- hrw[hrw$Driver_ID==anumber,]
+        
+        ### Create vector for header row
+        id <- c("Completed Mvs", "Avg Completed Mvs", "MPH", "Avg MPH", "On Time %", "Avg On Time %", "Hrs Worked")
+        
+        ### In the darkness bind them
+        ar1 <- rbind(acms, amph, aotp, ahrw)
+        ar2 <- cbind(id, ar1)
+        ar2 = ar2[,-2]
+        
+        ### Pivot long and wide
+        p1 <- colnames(ar2)
+        p2 <- p1[!p1 == "id"]
+        ar3 <- ar2 %>%
+                 pivot_longer(
+                         cols = p2,
+                         names_to = "date",
+                         values_to = "value"
+      
+        )
+        ar4 <- ar3 %>%
+                pivot_wider(
+                        names_from = id,
+                        values_from = value
+        )
+        
+        ### Cleanup
+        colnames(ar4)[1] <- anumber
+        ar5 <- na.omit(ar4)
+        
+        ### Export to PDF
+        pdf(paste(Sys.Date(),"_",anumber,".pdf"), height = 8.5, width = 11)
+        grid.table(ar5) 
+        dev.off()
+}
+
+## Step 4: For Loop
+for(i in a_number){
+driver_eval(i)
+}   
+
+```
+
+```{r}
+mph_barchart <- ggplot(smry_v5, aes(x=a_number,y=mph_tgt2)+
+        geom_bar(stat = "identity")
+mph_barchart
+```
